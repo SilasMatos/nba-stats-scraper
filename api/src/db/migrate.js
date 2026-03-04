@@ -44,6 +44,52 @@ async function migrate() {
     `)
     console.log('[MIGRATE] Índices criados OK')
 
+    // Tabela nba_teams (roster scraper — dados completos do site)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS nba_teams (
+        id            SERIAL PRIMARY KEY,
+        team_id       INTEGER UNIQUE,
+        full_name     VARCHAR(100) NOT NULL,
+        abbreviation  VARCHAR(5)   NOT NULL UNIQUE,
+        city          VARCHAR(50),
+        nickname      VARCHAR(50),
+        conference    VARCHAR(20),
+        division      VARCHAR(30),
+        scraped_at    TIMESTAMP DEFAULT NOW()
+      );
+    `)
+    console.log('[MIGRATE] Tabela nba_teams OK')
+
+    // Tabela nba_players (roster scraper — dados completos do site)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS nba_players (
+        id                SERIAL PRIMARY KEY,
+        player_id         INTEGER,
+        first_name        VARCHAR(100),
+        last_name         VARCHAR(100),
+        full_name         VARCHAR(200) NOT NULL,
+        team_abbreviation VARCHAR(5),
+        number            VARCHAR(10),
+        position          VARCHAR(20),
+        height            VARCHAR(10),
+        weight            VARCHAR(20),
+        last_attended     VARCHAR(100),
+        country           VARCHAR(100),
+        headshot_url      TEXT,
+        scraped_at        TIMESTAMP DEFAULT NOW()
+      );
+    `)
+    console.log('[MIGRATE] Tabela nba_players OK')
+
+    // Índices nba_players
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_nba_players_team
+        ON nba_players (team_abbreviation);
+      CREATE INDEX IF NOT EXISTS idx_nba_players_name
+        ON nba_players (full_name);
+    `)
+    console.log('[MIGRATE] Índices nba_players criados OK')
+
     await client.query('COMMIT')
     console.log('[MIGRATE] Migration concluída com sucesso!')
   } catch (err) {

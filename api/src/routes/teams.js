@@ -17,8 +17,8 @@ router.get('/', async (req, res) => {
   try {
     const { rows } = await pool.query(`
       SELECT
-        rt.abreviacao,
-        rt.nome_completo,
+        nt.abbreviation                                              AS abreviacao,
+        nt.full_name                                                 AS nome_completo,
         s.wins, s.losses,
         ROUND(s.pct * 100, 1)                                       AS aprov_pct,
         s.conference,
@@ -29,13 +29,13 @@ router.get('/', async (req, res) => {
           od_atq.points::NUMERIC / NULLIF(od_atq.games, 0) -
           od_def.points::NUMERIC / NULLIF(od_def.games, 0), 1
         )                                                           AS net_rating
-      FROM roster_teams rt
-      LEFT JOIN standings s         ON s.team = rt.abreviacao
-      LEFT JOIN ratios_teams r      ON r.team = rt.abreviacao
+      FROM nba_teams nt
+      LEFT JOIN standings s         ON s.team = nt.abbreviation
+      LEFT JOIN ratios_teams r      ON r.team = nt.abbreviation
       LEFT JOIN offensive_defensive od_atq
-        ON od_atq.team = rt.abreviacao AND od_atq.stat_type = 'OFFENSE'
+        ON od_atq.team = nt.abbreviation AND od_atq.stat_type = 'OFFENSE'
       LEFT JOIN offensive_defensive od_def
-        ON od_def.team = rt.abreviacao AND od_def.stat_type = 'DEFENSE'
+        ON od_def.team = nt.abbreviation AND od_def.stat_type = 'DEFENSE'
       ORDER BY s.pct DESC NULLS LAST
     `)
     res.json({ total: rows.length, times: rows })
@@ -110,7 +110,7 @@ router.get('/:team', async (req, res) => {
         [team]
       ),
       pool.query(
-        `SELECT player_name FROM roster_players WHERE team_abrev = $1 ORDER BY player_name`,
+        `SELECT full_name AS player_name FROM nba_players WHERE team_abbreviation = $1 ORDER BY full_name`,
         [team]
       )
     ])

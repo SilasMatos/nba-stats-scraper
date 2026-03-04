@@ -17,9 +17,9 @@ router.get('/team/:team', async (req, res) => {
     const { rows } = await pool.query(
       `
       SELECT
-        rp.player_name,
-        rp.team_abrev,
-        rp.team_nome,
+        np.full_name                                              AS player_name,
+        np.team_abbreviation                                      AS team_abrev,
+        nt.full_name                                              AS team_nome,
         apc.games, apc.minutes,
         ROUND(apc.minutes::NUMERIC / NULLIF(apc.games, 0), 1)    AS mpg,
         ROUND(apc.points::NUMERIC  / NULLIF(apc.games, 0), 1)    AS ppg,
@@ -31,11 +31,12 @@ router.get('/team/:team', async (req, res) => {
         ROUND(apc.fg::NUMERIC  / NULLIF(apc.fga, 0) * 100, 1)    AS fg_pct,
         ROUND(apc.fg3::NUMERIC / NULLIF(apc.f3a, 0) * 100, 1)    AS fg3_pct,
         ROUND(apc.ft::NUMERIC  / NULLIF(apc.fta, 0) * 100, 1)    AS ft_pct
-      FROM roster_players rp
+      FROM nba_players np
+      JOIN nba_teams nt ON nt.abbreviation = np.team_abbreviation
       LEFT JOIN alphabetical_player_cumulatives apc
-        ON apc.player_name ILIKE '%' || SPLIT_PART(rp.player_name, ' ', 2) || '%'
-        AND apc.team ILIKE rp.team_abrev
-      WHERE rp.team_abrev = $1
+        ON apc.player_name ILIKE '%' || np.last_name || '%'
+        AND apc.team ILIKE np.team_abbreviation
+      WHERE np.team_abbreviation = $1
       ORDER BY ppg DESC NULLS LAST
     `,
       [team]

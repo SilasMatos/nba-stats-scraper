@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 
 const matchupRoutes = require('./routes/matchup')
+const confrontoRoutes = require('./routes/confronto')
 const playerRoutes = require('./routes/players')
 const teamRoutes = require('./routes/teams')
 const leagueRoutes = require('./routes/league')
@@ -22,6 +23,7 @@ app.use((req, _res, next) => {
 
 // ── Rotas ────────────────────────────────────────────────────────────
 app.use('/api/matchup', matchupRoutes)
+app.use('/api/confronto', confrontoRoutes)
 app.use('/api/players', playerRoutes)
 app.use('/api/teams', teamRoutes)
 app.use('/api', leagueRoutes) // standings, scores, leaders
@@ -39,9 +41,15 @@ app.get('/', (_req, res) => {
     endpoints: {
       // ── CONFRONTOS (principal) ──────────────────────────────────
       'GET /api/matchup/:teamA/vs/:teamB':
-        'Relatório estatístico completo de um confronto. Ex: /api/matchup/ATL/vs/MIA',
+        'Relatório estatístico completo de um confronto por abreviação. Ex: /api/matchup/ATL/vs/MIA',
       'GET /api/matchup/:teamA/vs/:teamB/summary':
         'Resumo rápido do confronto com probabilidades',
+
+      // ── CONFRONTO POR NOME COMPLETO ────────────────────────────
+      'GET /api/confronto/:timeCasa/vs/:timeFora':
+        'Análise completa por nome ou slug. Ex: /api/confronto/Houston-Rockets/vs/Los-Angeles-Lakers',
+      'GET /api/confronto/times':
+        'Lista todos os times com de-para (nome completo → abreviação → slug)',
 
       // ── JOGADORES ──────────────────────────────────────────────
       'GET /api/players/:name':
@@ -75,6 +83,10 @@ app.get('/', (_req, res) => {
     },
 
     exemplos_de_uso: [
+      'GET /api/confronto/Houston-Rockets/vs/Los-Angeles-Lakers',
+      'GET /api/confronto/rockets/vs/lakers',
+      'GET /api/confronto/HOU/vs/LAL',
+      'GET /api/confronto/times',
       'GET /api/matchup/ATL/vs/MIA',
       'GET /api/matchup/LAL/vs/BOS/summary',
       'GET /api/players/Trae-Young/props',
@@ -120,11 +132,9 @@ app.get('/', (_req, res) => {
 
 // ── 404 ──────────────────────────────────────────────────────────────
 app.use((_req, res) => {
-  res
-    .status(404)
-    .json({
-      error: 'Rota não encontrada. Acesse / para ver os endpoints disponíveis.'
-    })
+  res.status(404).json({
+    error: 'Rota não encontrada. Acesse / para ver os endpoints disponíveis.'
+  })
 })
 
 // ── Error handler ─────────────────────────────────────────────────────
